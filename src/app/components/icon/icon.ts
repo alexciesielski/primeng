@@ -1,9 +1,9 @@
-import { NgClass, NgComponentOutlet, NgStyle } from '@angular/common';
+import { NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, InjectionToken, Input, Type, inject } from '@angular/core';
 
 export interface PIconComponent {
     icon: string;
-    iconStyle?: NgStyle['ngStyle'];
+    iconStyle?: string;
 }
 
 export const P_ICON_COMPONENT = new InjectionToken<Type<PIconComponent>>('P_ICON_COMPONENT');
@@ -14,11 +14,11 @@ export const P_ICON_COMPONENT = new InjectionToken<Type<PIconComponent>>('P_ICON
  */
 @Component({
     standalone: true,
-    imports: [NgClass, NgStyle, NgComponentOutlet],
+    imports: [NgComponentOutlet],
     selector: 'p-icon',
     template: `
         @if(!iconComponentClass) {
-        <i [ngClass]="icon" [ngStyle]="iconStyle"></i>
+        <i [class]="icon" [style]="iconStyle"></i>
         } @else {
         <ng-container *ngComponentOutlet="iconComponentClass; inputs: { icon: icon, iconStyle: iconStyle }" />
         }
@@ -27,12 +27,11 @@ export const P_ICON_COMPONENT = new InjectionToken<Type<PIconComponent>>('P_ICON
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         class: 'p-element'
-        // style: 'display: contents'
     }
 })
 export class Icon implements PIconComponent {
     @Input({ required: true }) icon: string;
-    @Input() iconStyle?: NgStyle['ngStyle'];
+    @Input() iconStyle?: string;
 
     protected readonly iconComponentClass = inject(P_ICON_COMPONENT, { optional: true });
 }
