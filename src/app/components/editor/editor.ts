@@ -41,7 +41,7 @@ export const EDITOR_VALUE_ACCESSOR: any = {
                 <ng-content select="p-header"></ng-content>
                 <ng-container *ngTemplateOutlet="headerTemplate"></ng-container>
             </div>
-            <div class="p-editor-toolbar" *ngIf="!toolbar && !headerTemplate">
+            <div class="p-editor-toolbar" *ngIf="!modules && !toolbar && !headerTemplate">
                 <span class="ql-formats">
                     <select class="ql-header">
                         <option value="1">Heading</option>
@@ -174,8 +174,6 @@ export class Editor implements AfterContentInit, ControlValueAccessor {
 
     value: Nullable<string>;
 
-    delayedCommand: Function | null = null;
-
     _readonly: boolean = false;
 
     onModelChange: Function = () => {};
@@ -188,13 +186,12 @@ export class Editor implements AfterContentInit, ControlValueAccessor {
 
     headerTemplate: Nullable<TemplateRef<any>>;
 
-    private get isAttachedQuillEditorToDOM(): boolean | undefined {
-        return this.quillElements?.editorElement?.isConnected;
-    }
-
     private quillElements!: { editorElement: HTMLElement; toolbarElement: HTMLElement };
 
-    constructor(public el: ElementRef, @Inject(PLATFORM_ID) private platformId: object) {
+    constructor(
+        public el: ElementRef,
+        @Inject(PLATFORM_ID) private platformId: object
+    ) {
         /**
          * Read or write the DOM once, when initializing non-Angular (Quill) library.
          */
@@ -219,25 +216,9 @@ export class Editor implements AfterContentInit, ControlValueAccessor {
 
         if (this.quill) {
             if (value) {
-                const command = (): void => {
-                    this.quill.setContents(this.quill.clipboard.convert(this.value));
-                };
-
-                if (this.isAttachedQuillEditorToDOM) {
-                    command();
-                } else {
-                    this.delayedCommand = command;
-                }
+                this.quill.setContents(this.quill.clipboard.convert(this.dynamicQuill.version.startsWith('2') ? { html: this.value } : this.value));
             } else {
-                const command = (): void => {
-                    this.quill.setText('');
-                };
-
-                if (this.isAttachedQuillEditorToDOM) {
-                    command();
-                } else {
-                    this.delayedCommand = command;
-                }
+                this.quill.setText('');
             }
         }
     }
@@ -292,13 +273,15 @@ export class Editor implements AfterContentInit, ControlValueAccessor {
             scrollingContainer: this.scrollingContainer
         });
 
+        const isQuill2 = this.dynamicQuill.version.startsWith('2');
+
         if (this.value) {
-            this.quill.setContents(this.quill.clipboard.convert(this.value));
+            this.quill.setContents(this.quill.clipboard.convert(isQuill2 ? { html: this.value } : this.value));
         }
 
         this.quill.on('text-change', (delta: any, oldContents: any, source: any) => {
             if (source === 'user') {
-                let html = DomHandler.findSingle(editorElement, '.ql-editor').innerHTML;
+                let html = isQuill2 ? this.quill.getSemanticHTML() : DomHandler.findSingle(editorElement, '.ql-editor').innerHTML;
                 let text = this.quill.getText().trim();
                 if (html === '<p><br></p>') {
                     html = null;

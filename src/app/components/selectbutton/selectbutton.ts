@@ -24,7 +24,7 @@ export const SELECTBUTTON_VALUE_ACCESSOR: any = {
             <div
                 *ngFor="let option of options; let i = index"
                 pRipple
-                [attr.tabindex]="i === focusedIndex ? '0' : '-1'"
+                [attr.tabindex]="i === focusedIndex && !disabled ? '0' : '-1'"
                 [attr.aria-label]="option.label"
                 [role]="multiple ? 'checkbox' : 'radio'"
                 [attr.aria-checked]="isSelected(option)"
@@ -32,7 +32,6 @@ export const SELECTBUTTON_VALUE_ACCESSOR: any = {
                 class="p-button p-component"
                 [class]="option.styleClass"
                 [ngClass]="{ 'p-highlight': isSelected(option), 'p-disabled': disabled || isOptionDisabled(option), 'p-button-icon-only': option.icon && !getOptionLabel(option) }"
-                [attr.aria-pressed]="isSelected(option)"
                 (click)="onOptionSelect($event, option, i)"
                 (keydown)="onKeyDown($event, option, i)"
                 [attr.title]="option.title"

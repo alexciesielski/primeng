@@ -38,15 +38,15 @@ export const TOGGLEBUTTON_VALUE_ACCESSOR: any = {
             pAutoFocus
             [autofocus]="autofocus"
         >
-            @if(!iconTemplate) {
-            <span
-                *ngIf="onIcon || offIcon"
-                [class]="checked ? this.onIcon : this.offIcon"
-                [ngClass]="{ 'p-button-icon': true, 'p-button-icon-left': iconPos === 'left', 'p-button-icon-right': iconPos === 'right' }"
-                [attr.data-pc-section]="'icon'"
-            ></span>
+            @if (!iconTemplate) {
+                <span
+                    *ngIf="onIcon || offIcon"
+                    [class]="checked ? this.onIcon : this.offIcon"
+                    [ngClass]="{ 'p-button-icon': true, 'p-button-icon-left': iconPos === 'left', 'p-button-icon-right': iconPos === 'right' }"
+                    [attr.data-pc-section]="'icon'"
+                ></span>
             } @else {
-            <ng-container *ngTemplateOutlet="iconTemplate; context: { $implicit: checked }"></ng-container>
+                <ng-container *ngTemplateOutlet="iconTemplate; context: { $implicit: checked }"></ng-container>
             }
             <span class="p-button-label" *ngIf="onLabel || offLabel" [attr.data-pc-section]="'label'">{{ checked ? (hasOnLabel ? onLabel : '') : hasOffLabel ? offLabel : '' }}</span>
         </div>
@@ -157,17 +157,19 @@ export class ToggleButton implements ControlValueAccessor {
     }
 
     toggle(event: Event) {
-        if (!this.disabled) {
-            this.checked = !this.checked;
-            this.onModelChange(this.checked);
-            this.onModelTouched();
-            this.onChange.emit({
-                originalEvent: event,
-                checked: this.checked
-            });
-
-            this.cd.markForCheck();
+        if (this.disabled) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
         }
+        this.checked = !this.checked;
+        this.onModelChange(this.checked);
+        this.onModelTouched();
+        this.onChange.emit({
+            originalEvent: event,
+            checked: this.checked
+        });
+        this.cd.markForCheck();
     }
 
     onKeyDown(event: KeyboardEvent) {
@@ -210,7 +212,7 @@ export class ToggleButton implements ControlValueAccessor {
     }
 
     get hasOffLabel(): boolean {
-        return (this.onLabel && this.onLabel.length > 0) as boolean;
+        return (this.offLabel && this.offLabel.length > 0) as boolean;
     }
 }
 

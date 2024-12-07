@@ -103,8 +103,9 @@ export class VeronaPage {
             darkSrc: 'https://primefaces.org/cdn/primeng/images/compatible-ng-dark.png'
         },
         {
-            title: 'Lifetime Support',
-            description: 'Verona has a dedicated forum where lifetime support is delivered by engineers at PrimeTek in a timely manner.',
+            title: 'Support',
+            description: `PrimeTek offers assistance with account management and licensing issues, with the expectation that users have the necessary technical knowledge to use our products, as we do not offer technical support or consulting. Users
+                            can seek assistance in our community via our public Discord and Forum.`,
             src: 'https://primefaces.org/cdn/primeng/images/templates/apollo/apollo-features2-lifetime.png'
         },
         {
@@ -206,18 +207,19 @@ export class VeronaPage {
     license = {
         documentLink: 'https://verona.primeng.org/documentation',
         description: 'The download package is an Angular CLI-based project containing all source code of the application deployed at the live demo. The project code is written in TypeScript.',
+        showDiscount: false,
         licenseDetails: [
             {
                 title: 'Basic License',
                 price: '$49',
-                discount_price: '$29',
-                included: ['Non Commercial Usage', 'Single End Product, No Multi-Use', 'Lifetime Support', 'Unlimited Updates']
+                discount: '$29',
+                included: ['Non Commercial Usage', 'Single End Product, No Multi-Use', '1 Year Free Updates']
             },
             {
                 title: 'Extended License',
                 price: '$490',
-                discount_price: '$290',
-                included: ['Commercial Usage', 'Multiple End Products', 'Lifetime Support', 'Unlimited Updates']
+                discount: '$290',
+                included: ['Commercial Usage', 'Multiple End Products', '1 Year Free Updates']
             }
         ]
     };

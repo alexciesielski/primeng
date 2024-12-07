@@ -37,7 +37,7 @@ import { ChevronDownIcon } from 'primeng/icons/chevrondown';
 import { TimesIcon } from 'primeng/icons/times';
 import { CalendarIcon } from 'primeng/icons/calendar';
 import { Nullable, VoidListener } from 'primeng/ts-helpers';
-import { NavigationState, CalendarResponsiveOptions, CalendarTypeView, LocaleSettings, Month, CalendarMonthChangeEvent, CalendarYearChangeEvent } from './calendar.interface';
+import { CalendarMonthChangeEvent, CalendarResponsiveOptions, CalendarTypeView, CalendarYearChangeEvent, LocaleSettings, Month, NavigationState } from './calendar.interface';
 import { AutoFocusModule } from 'primeng/autofocus';
 
 export const CALENDAR_VALUE_ACCESSOR: any = {
@@ -240,7 +240,7 @@ export const CALENDAR_VALUE_ACCESSOR: any = {
                                             <td *ngFor="let date of week" [attr.aria-label]="date.day" [ngClass]="{ 'p-datepicker-other-month': date.otherMonth, 'p-datepicker-today': date.today }">
                                                 <ng-container *ngIf="date.otherMonth ? showOtherMonths : true">
                                                     <span
-                                                        [ngClass]="{ 'p-highlight': isSelected(date) && date.selectable, 'p-disabled': !date.selectable }"
+                                                        [ngClass]="{ 'p-highlight p-datepicker-current-day': isSelected(date) && date.selectable, 'p-disabled': !date.selectable }"
                                                         (click)="onDateSelect($event, date)"
                                                         draggable="false"
                                                         [attr.data-date]="formatDateKey(formatDateMetaToDate(date))"
@@ -605,6 +605,11 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
      * @group Props
      */
     @Input({ transform: booleanAttribute }) timeOnly: boolean | undefined;
+    /**
+     * Years to change per step in yearpicker.
+     * @group Props
+     */
+    @Input({ transform: numberAttribute }) stepYearPicker: number = 10;
     /**
      * Hours to change per step.
      * @group Props
@@ -1164,7 +1169,15 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
         return this.currentView === 'year' ? this.getTranslation('nextDecade') : this.currentView === 'month' ? this.getTranslation('nextYear') : this.getTranslation('nextMonth');
     }
 
-    constructor(@Inject(DOCUMENT) private document: Document, public el: ElementRef, public renderer: Renderer2, public cd: ChangeDetectorRef, private zone: NgZone, private config: PrimeNGConfig, public overlayService: OverlayService) {
+    constructor(
+        @Inject(DOCUMENT) private document: Document,
+        public el: ElementRef,
+        public renderer: Renderer2,
+        public cd: ChangeDetectorRef,
+        private zone: NgZone,
+        private config: PrimeNGConfig,
+        public overlayService: OverlayService
+    ) {
         this.window = this.document.defaultView as Window;
     }
 
@@ -1299,8 +1312,8 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
 
     yearPickerValues() {
         let yearPickerValues = [];
-        let base = <number>this.currentYear - (<number>this.currentYear % 10);
-        for (let i = 0; i < 10; i++) {
+        let base = <number>this.currentYear - (<number>this.currentYear % this.stepYearPicker);
+        for (let i = 0; i < this.stepYearPicker; i++) {
             yearPickerValues.push(base + i);
         }
 
@@ -1422,7 +1435,7 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
                 this.updateFocus();
             }, 1);
         } else if (this.currentView === 'year') {
-            this.decrementDecade();
+            this.decrementYearPickerStep();
             setTimeout(() => {
                 this.updateFocus();
             }, 1);
@@ -1453,7 +1466,7 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
                 this.updateFocus();
             }, 1);
         } else if (this.currentView === 'year') {
-            this.incrementDecade();
+            this.incrementYearPickerStep();
             setTimeout(() => {
                 this.updateFocus();
             }, 1);
@@ -1480,12 +1493,12 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
         }
     }
 
-    decrementDecade() {
-        this.currentYear = this.currentYear - 10;
+    decrementYearPickerStep() {
+        this.currentYear = this.currentYear - this.stepYearPicker;
     }
 
-    incrementDecade() {
-        this.currentYear = this.currentYear + 10;
+    incrementYearPickerStep() {
+        this.currentYear = this.currentYear + this.stepYearPicker;
     }
 
     incrementYear() {
@@ -1528,7 +1541,7 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
             }
         }
 
-        if ((this.isSingleSelection() && this.hideOnDateTimeSelect) || (this.isRangeSelection() && this.value[1])) {
+        if (this.hideOnDateTimeSelect && (this.isSingleSelection() || (this.isRangeSelection() && this.value[1]))) {
             setTimeout(() => {
                 event.preventDefault();
                 this.hideOverlay();
@@ -1630,7 +1643,7 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
     }
 
     formatDateKey(date: Date): string {
-        return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     }
 
     setCurrentHourPM(hours: number) {
@@ -1831,13 +1844,11 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
     }
 
     isYearSelected(year: number) {
-        if (this.isComparable()) {
-            let value = this.isRangeSelection() ? this.value[0] : this.value;
+        if (!this.isComparable()) return false;
+        if (this.isMultipleSelection()) return false;
 
-            return !this.isMultipleSelection() ? value.getFullYear() === year : false;
-        }
-
-        return false;
+        let value = this.isRangeSelection() ? this.value[0] : this.value;
+        return value ? value.getFullYear() === year : false;
     }
 
     isDateEquals(value: any, dateMeta: any) {
@@ -2474,6 +2485,7 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
         } else {
             this.initFocusableCell();
         }
+        this.alignOverlay();
     }
 
     initFocusableCell() {
@@ -2688,6 +2700,10 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
 
     toggleAMPMIfNotMinDate(newPM: boolean) {
         let value = this.value;
+
+        if ((this.selectionMode == 'range' || this.selectionMode == 'multiple') && Array.isArray(value) && value.length > 0) {
+            value = value[value.length - 1];
+        }
         const valueDateString = value ? value.toDateString() : null;
         let isMinDate = this.minDate && valueDateString && this.minDate.toDateString() === valueDateString;
         if (isMinDate && this.minDate.getHours() >= 12) {
@@ -2944,7 +2960,7 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
     updateUI() {
         let propValue = this.value;
         if (Array.isArray(propValue)) {
-            propValue = propValue.length === 2 ? propValue[1] : propValue[0];
+            propValue = propValue[1] || propValue[0];
         }
 
         let val = this.defaultDate && this.isValidDate(this.defaultDate) && !this.value ? this.defaultDate : propValue && this.isValidDate(propValue) ? propValue : new Date();
@@ -3059,10 +3075,16 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
         } else if (this.overlay) {
             if (this.appendTo) {
                 if (this.view === 'date') {
-                    this.overlay.style.width = DomHandler.getOuterWidth(this.overlay) + 'px';
-                    this.overlay.style.minWidth = DomHandler.getOuterWidth(this.inputfieldViewChild?.nativeElement) + 'px';
+                    if (!this.overlay.style.width) {
+                        this.overlay.style.width = DomHandler.getOuterWidth(this.overlay) + 'px';
+                    }
+                    if (!this.overlay.style.minWidth) {
+                        this.overlay.style.minWidth = DomHandler.getOuterWidth(this.inputfieldViewChild?.nativeElement) + 'px';
+                    }
                 } else {
-                    this.overlay.style.width = DomHandler.getOuterWidth(this.inputfieldViewChild?.nativeElement) + 'px';
+                    if (!this.overlay.style.width) {
+                        this.overlay.style.width = DomHandler.getOuterWidth(this.inputfieldViewChild?.nativeElement) + 'px';
+                    }
                 }
 
                 DomHandler.absolutePosition(this.overlay, this.inputfieldViewChild?.nativeElement);
@@ -3526,6 +3548,7 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
             if (!this.responsiveStyleElement) {
                 this.responsiveStyleElement = this.renderer.createElement('style');
                 (<HTMLStyleElement>this.responsiveStyleElement).type = 'text/css';
+                DomHandler.setAttribute(this.responsiveStyleElement, 'nonce', this.config?.csp()?.nonce);
                 this.renderer.appendChild(this.document.body, this.responsiveStyleElement);
             }
 
@@ -3558,7 +3581,6 @@ export class Calendar implements OnInit, OnDestroy, ControlValueAccessor {
             }
 
             (<HTMLStyleElement>this.responsiveStyleElement).innerHTML = innerHTML;
-            DomHandler.setAttribute(this.responsiveStyleElement, 'nonce', this.config?.csp()?.nonce);
         }
     }
 

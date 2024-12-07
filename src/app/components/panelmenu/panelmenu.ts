@@ -128,9 +128,9 @@ import { ObjectUtils, UniqueComponentId } from 'primeng/utils';
                             <ng-template *ngTemplateOutlet="itemTemplate; context: { $implicit: processedItem.item }"></ng-template>
                         </ng-container>
                     </div>
-                    <div class="p-toggleable-content" [@submenu]="getAnimation(processedItem)">
+                    <div class="p-toggleable-content" [@submenu]="getAnimation(processedItem)" (@submenu.done)="onToggleDone()">
                         <p-panelMenuSub
-                            *ngIf="isItemVisible(processedItem) && isItemGroup(processedItem) && isItemExpanded(processedItem)"
+                            *ngIf="isItemVisible(processedItem) && isItemGroup(processedItem) && (isItemExpanded(processedItem) || animating)"
                             [id]="getItemId(processedItem) + '_list'"
                             [panelId]="panelId"
                             [items]="processedItem?.items"
@@ -201,7 +201,12 @@ export class PanelMenuSub {
 
     @ViewChild('list') listViewChild: ElementRef;
 
-    constructor(@Inject(forwardRef(() => PanelMenu)) public panelMenu: PanelMenu, public el: ElementRef) {}
+    animating: boolean | undefined;
+
+    constructor(
+        @Inject(forwardRef(() => PanelMenu)) public panelMenu: PanelMenu,
+        public el: ElementRef
+    ) {}
 
     getItemId(processedItem) {
         return processedItem.item?.id ?? `${this.panelId}_${processedItem.key}`;
@@ -264,6 +269,7 @@ export class PanelMenuSub {
 
     onItemClick(event, processedItem) {
         if (!this.isItemDisabled(processedItem)) {
+            this.animating = true;
             this.getItemProp(processedItem, 'command', { originalEvent: event, item: processedItem.item });
             this.itemToggle.emit({ processedItem, expanded: !this.isItemActive(processedItem) });
         }
@@ -271,6 +277,10 @@ export class PanelMenuSub {
 
     onItemToggle(event) {
         this.itemToggle.emit(event);
+    }
+
+    onToggleDone() {
+        this.animating = false;
     }
 }
 
@@ -354,7 +364,17 @@ export class PanelMenuList implements OnChanges {
     constructor(private el: ElementRef) {}
 
     ngOnChanges(changes: SimpleChanges) {
-        this.processedItems.set(this.createProcessedItems(changes?.items?.currentValue || this.items || []));
+        const hasItems = !!changes?.items?.currentValue;
+
+        if (hasItems) {
+            this.processedItems.set(this.createProcessedItems(changes?.items?.currentValue || this.items || []));
+            return;
+        }
+
+        // Update and keep `expanded` property from previous data
+        else {
+            this.processedItems.update((prev) => prev.map((i) => ({ ...i, expanded: i.expanded })));
+        }
     }
 
     getItemProp(processedItem, name) {

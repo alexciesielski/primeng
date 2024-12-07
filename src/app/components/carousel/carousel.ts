@@ -149,6 +149,22 @@ import { DomHandler } from 'primeng/dom';
     }
 })
 export class Carousel implements AfterContentInit {
+    private updateSlideAccessibility(slide: HTMLElement, isActive: boolean): void {
+        const focusableElements = slide.querySelectorAll<HTMLElement>('a, button, input, select, textarea, [tabindex]');
+        focusableElements.forEach((element) => {
+            element.tabIndex = isActive ? 0 : -1;
+        });
+    }
+
+    private updateCarouselItemsAccessibility(): void {
+        const slides = this.el.nativeElement.querySelectorAll('.p-carousel-item');
+        slides.forEach((slide, index) => {
+            const isActive = index === this._page;
+            slide.setAttribute('aria-hidden', !isActive ? 'true' : 'false');
+            this.updateSlideAccessibility(slide as HTMLElement, isActive);
+        });
+    }
+
     /**
      * Index of the first item.
      * @defaultValue 0
@@ -357,7 +373,15 @@ export class Carousel implements AfterContentInit {
 
     window: Window;
 
-    constructor(public el: ElementRef, public zone: NgZone, public cd: ChangeDetectorRef, private renderer: Renderer2, @Inject(DOCUMENT) private document: Document, @Inject(PLATFORM_ID) private platformId: any, private config: PrimeNGConfig) {
+    constructor(
+        public el: ElementRef,
+        public zone: NgZone,
+        public cd: ChangeDetectorRef,
+        private renderer: Renderer2,
+        @Inject(DOCUMENT) private document: Document,
+        @Inject(PLATFORM_ID) private platformId: any,
+        private config: PrimeNGConfig
+    ) {
         this.totalShiftedItems = this.page * this.numScroll * -1;
         this.window = this.document.defaultView as Window;
     }
@@ -807,6 +831,7 @@ export class Carousel implements AfterContentInit {
             page: this.page
         });
         this.cd.markForCheck();
+        this.updateCarouselItemsAccessibility();
     }
 
     startAutoplay() {

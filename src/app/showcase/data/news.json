@@ -1,6 +1,7 @@
 {
-    "id": 64,
-    "content": "🌸 Spring Sale: Save Up to 50% on Premium Templates and More.",
-    "linkText": "Learn More",
-    "linkHref": "https://primefaces.org/store"
+    "id": 72,
+    "content": "The Black Friday Sale is now live with up to 50% off! 🎉",
+    "linkText": "Visit Store",
+    "linkHref": "https://primefaces.org/store",
+    "target": "_blank"
 }

@@ -14,13 +14,13 @@ import { ProductService } from '@service/productservice';
                 <p-toast />
                 <p-toolbar styleClass="mb-4 gap-2">
                     <ng-template pTemplate="left">
-                        <p-button pRipple severity="success" label="New" icon="pi pi-plus" class="mr-2" (click)="openNew()" />
-                        <p-button pRipple severity="danger" label="Delete" icon="pi pi-trash" (click)="deleteSelectedProducts()" [disabled]="!selectedProducts || !selectedProducts.length" />
+                        <p-button severity="success" label="New" icon="pi pi-plus" class="mr-2" (onClick)="openNew()" />
+                        <p-button severity="danger" label="Delete" icon="pi pi-trash" (onClick)="deleteSelectedProducts()" [disabled]="!selectedProducts || !selectedProducts.length" />
                     </ng-template>
 
                     <ng-template pTemplate="right">
                         <p-fileUpload mode="basic" accept="image/*" [maxFileSize]="1000000" label="Import" chooseLabel="Import" class="mr-2 inline-block" />
-                        <p-button pRipple severity="help" label="Export" icon="pi pi-upload" />
+                        <p-button severity="help" label="Export" icon="pi pi-upload" />
                     </ng-template>
                 </p-toolbar>
 
@@ -67,15 +67,15 @@ import { ProductService } from '@service/productservice';
                             </td>
                             <td>{{ product.name }}</td>
                             <td><img [src]="'https://primefaces.org/cdn/primeng/images/demo/product/' + product.image" [alt]="product.name" width="50" class="shadow-4" /></td>
-                            <td>{{ product.price | currency : 'USD' }}</td>
+                            <td>{{ product.price | currency: 'USD' }}</td>
                             <td>{{ product.category }}</td>
                             <td><p-rating [(ngModel)]="product.rating" [readonly]="true" [cancel]="false" /></td>
                             <td>
                                 <p-tag [value]="product.inventoryStatus" [severity]="getSeverity(product.inventoryStatus)" />
                             </td>
                             <td>
-                                <p-button pRipple icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" severity="success" (click)="editProduct(product)" />
-                                <p-button pRipple icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteProduct(product)" />
+                                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" severity="success" (onClick)="editProduct(product)" />
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (onClick)="deleteProduct(product)" />
                             </td>
                         </tr>
                     </ng-template>
@@ -144,8 +144,8 @@ import { ProductService } from '@service/productservice';
                     </ng-template>
 
                     <ng-template pTemplate="footer">
-                        <p-button pRipple label="Cancel" icon="pi pi-times" [text]="true" (click)="hideDialog()" />
-                        <p-button pRipple label="Save" icon="pi pi-check" [text]="true" (click)="saveProduct()" />
+                        <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="hideDialog()" />
+                        <p-button label="Save" icon="pi pi-check" [text]="true" (onClick)="saveProduct()" />
                     </ng-template>
                 </p-dialog>
 
@@ -169,7 +169,12 @@ export class ProductsDoc {
 
     statuses!: any[];
 
-    constructor(private productService: ProductService, private messageService: MessageService, private confirmationService: ConfirmationService, private cd: ChangeDetectorRef) {}
+    constructor(
+        private productService: ProductService,
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService,
+        private cd: ChangeDetectorRef
+    ) {}
 
     loadDemoData() {
         this.productService.getProducts().then((data) => {
@@ -283,18 +288,16 @@ export class ProductsDoc {
 <p-toolbar styleClass="mb-4 gap-2">
     <ng-template pTemplate="left">
         <p-button 
-            pRipple 
             severity="success" 
             label="New" 
             icon="pi pi-plus" 
             class="mr-2" 
-            (click)="openNew()" />
+            (onClick)="openNew()" />
         <p-button 
-            pRipple
             severity="danger" 
             label="Delete" 
             icon="pi pi-trash" 
-            (click)="deleteSelectedProducts()" 
+            (onClick)="deleteSelectedProducts()" 
             [disabled]="!selectedProducts || !selectedProducts.length" />
     </ng-template>
 
@@ -307,8 +310,9 @@ export class ProductsDoc {
             chooseLabel="Import" 
             class="mr-2 inline-block" />
         <p-button 
-            pRipple severity="help" 
-            label="Export" icon="pi pi-upload" />
+            severity="help" 
+            label="Export" 
+            icon="pi pi-upload" />
     </ng-template>
 </p-toolbar>
 
@@ -393,20 +397,20 @@ export class ProductsDoc {
             </td>
             <td>
                 <p-button 
-                    pRipple 
+                 
                     icon="pi pi-pencil" 
                     class="mr-2" 
                     [rounded]="true" 
                     [outlined]="true" 
                     severity="success" 
-                    (click)="editProduct(product)" />
+                    (onClick)="editProduct(product)" />
                 <p-button 
-                    pRipple 
+                 
                     icon="pi pi-trash" 
                     severity="danger" 
                     [rounded]="true" 
                     [outlined]="true" 
-                    (click)="deleteProduct(product)" />
+                    (onClick)="deleteProduct(product)" />
             </td>
         </tr>
     </ng-template>
@@ -420,19 +424,17 @@ export class ProductsDoc {
     <p-toast />
     <p-toolbar styleClass="mb-4 gap-2">
         <ng-template pTemplate="left">
-            <p-button 
-                pRipple 
+            <p-button
                 severity="success" 
                 label="New" 
                 icon="pi pi-plus" 
                 class="mr-2" 
-                (click)="openNew()" />
-            <p-button 
-                pRipple 
+                (onClick)="openNew()" />
+            <p-button
                 severity="danger" 
                 label="Delete" 
                 icon="pi pi-trash" 
-                (click)="deleteSelectedProducts()" 
+                (onClick)="deleteSelectedProducts()" 
                 [disabled]="!selectedProducts || !selectedProducts.length" />
         </ng-template>
 
@@ -444,8 +446,7 @@ export class ProductsDoc {
                 label="Import" 
                 chooseLabel="Import" 
                 class="mr-2 inline-block" />
-            <p-button 
-                pRipple 
+            <p-button
                 severity="help" 
                 label="Export" 
                 icon="pi pi-upload" />
@@ -538,20 +539,18 @@ export class ProductsDoc {
                 </td>
                 <td>
                     <p-button 
-                        pRipple 
                         icon="pi pi-pencil" 
                         class="mr-2" 
                         [rounded]="true" 
                         [outlined]="true" 
                         severity="success" 
-                        (click)="editProduct(product)" />
+                        (onClick)="editProduct(product)" />
                     <p-button 
-                        pRipple 
                         icon="pi pi-trash" 
                         severity="danger" 
                         [rounded]="true" 
                         [outlined]="true" 
-                        (click)="deleteProduct(product)" />
+                        (onClick)="deleteProduct(product)" />
                 </td>
             </tr>
         </ng-template>
@@ -677,17 +676,15 @@ export class ProductsDoc {
 
             <ng-template pTemplate="footer">
                 <p-button 
-                    pRipple 
                     label="Cancel" 
                     icon="pi pi-times" 
                     [text]="true" 
-                    (click)="hideDialog()" />
-                <p-button 
-                    pRipple 
+                    (onClick)="hideDialog()" />
+                <p-button
                     label="Save" 
                     icon="pi pi-check" 
                     [text]="true" 
-                    (click)="saveProduct()" />
+                    (onClick)="saveProduct()" />
             </ng-template>
     </p-dialog>
 

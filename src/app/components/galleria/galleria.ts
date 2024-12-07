@@ -286,7 +286,13 @@ export class Galleria implements OnChanges, OnDestroy {
 
     numVisibleLimit = 0;
 
-    constructor(@Inject(DOCUMENT) private document: Document, @Inject(PLATFORM_ID) public platformId: any, public element: ElementRef, public cd: ChangeDetectorRef, public config: PrimeNGConfig) {}
+    constructor(
+        @Inject(DOCUMENT) private document: Document,
+        @Inject(PLATFORM_ID) public platformId: any,
+        public element: ElementRef,
+        public cd: ChangeDetectorRef,
+        public config: PrimeNGConfig
+    ) {}
 
     ngAfterContentInit() {
         this.templates?.forEach((item) => {
@@ -503,7 +509,13 @@ export class GalleriaContent implements DoCheck {
 
     private differ: any;
 
-    constructor(public galleria: Galleria, public cd: ChangeDetectorRef, private differs: KeyValueDiffers, public config: PrimeNGConfig, private elementRef: ElementRef) {
+    constructor(
+        public galleria: Galleria,
+        public cd: ChangeDetectorRef,
+        private differs: KeyValueDiffers,
+        public config: PrimeNGConfig,
+        private elementRef: ElementRef
+    ) {
         this.id = this.galleria.id || UniqueComponentId();
         this.differ = this.differs.find(this.galleria).create();
     }
@@ -663,13 +675,13 @@ export class GalleriaItemSlot {
                 <button
                     *ngIf="showItemNavigators"
                     type="button"
-                    role="navigation"
                     [ngClass]="{ 'p-galleria-item-prev p-galleria-item-nav p-link': true, 'p-galleria-item-nav-focused': leftButtonFocused, 'p-disabled': this.isNavBackwardDisabled() }"
                     (click)="navBackward($event)"
                     [disabled]="isNavBackwardDisabled()"
                     pRipple
                     (focus)="onButtonFocus('left')"
                     (blur)="onButtonBlur('left')"
+                    [attr.aria-label]="ariaPreviousNavigationLabel()"
                 >
                     <ChevronLeftIcon *ngIf="!galleria.itemPreviousIconTemplate" [styleClass]="'p-galleria-item-prev-icon'" />
                     <ng-template *ngTemplateOutlet="galleria.itemPreviousIconTemplate"></ng-template>
@@ -684,9 +696,9 @@ export class GalleriaItemSlot {
                     (click)="navForward($event)"
                     [disabled]="isNavForwardDisabled()"
                     pRipple
-                    role="navigation"
                     (focus)="onButtonFocus('right')"
                     (blur)="onButtonBlur('right')"
+                    [attr.aria-label]="ariaNextNavigationLabel()"
                 >
                     <ChevronRightIcon *ngIf="!galleria.itemNextIconTemplate" [styleClass]="'p-galleria-item-next-icon'" />
                     <ng-template *ngTemplateOutlet="galleria.itemNextIconTemplate"></ng-template>
@@ -876,6 +888,14 @@ export class GalleriaItem implements OnChanges {
     ariaPageLabel(value) {
         return this.galleria.config.translation.aria ? this.galleria.config.translation.aria.pageLabel.replace(/{page}/g, value) : undefined;
     }
+
+    ariaNextNavigationLabel() {
+        return this.galleria.config.translation.aria ? this.galleria.config.translation.aria.next : undefined;
+    }
+
+    ariaPreviousNavigationLabel() {
+        return this.galleria.config.translation.aria ? this.galleria.config.translation.aria.previous : undefined;
+    }
 }
 
 @Component({
@@ -1017,7 +1037,13 @@ export class GalleriaThumbnails implements OnInit, AfterContentChecked, AfterVie
 
     _oldactiveIndex: number = 0;
 
-    constructor(public galleria: Galleria, @Inject(DOCUMENT) private document: Document, @Inject(PLATFORM_ID) private platformId: any, private renderer: Renderer2, private cd: ChangeDetectorRef) {}
+    constructor(
+        public galleria: Galleria,
+        @Inject(DOCUMENT) private document: Document,
+        @Inject(PLATFORM_ID) private platformId: any,
+        private renderer: Renderer2,
+        private cd: ChangeDetectorRef
+    ) {}
 
     ngOnInit() {
         if (isPlatformBrowser(this.platformId)) {

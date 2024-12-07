@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { AfterViewInit, Directive, ElementRef, HostListener, Inject, Input, NgModule, NgZone, OnDestroy, PLATFORM_ID, Renderer2, SimpleChanges, TemplateRef, ViewContainerRef, booleanAttribute, numberAttribute } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, Inject, Input, NgModule, NgZone, OnDestroy, PLATFORM_ID, Renderer2, SimpleChanges, TemplateRef, ViewContainerRef, booleanAttribute, numberAttribute } from '@angular/core';
 import { PrimeNGConfig, TooltipOptions } from 'primeng/api';
 import { ConnectedOverlayScrollHandler, DomHandler } from 'primeng/dom';
 import { Nullable } from 'primeng/ts-helpers';
@@ -160,11 +160,22 @@ export class Tooltip implements AfterViewInit, OnDestroy {
 
     blurListener: Nullable<Function>;
 
+    documentEscapeListener: Nullable<Function>;
+
     scrollHandler: any;
 
     resizeListener: any;
 
-    constructor(@Inject(PLATFORM_ID) private platformId: any, public el: ElementRef, public zone: NgZone, public config: PrimeNGConfig, private renderer: Renderer2, private viewContainer: ViewContainerRef) {}
+    interactionInProgress = false;
+
+    constructor(
+        @Inject(PLATFORM_ID) private platformId: any,
+        public el: ElementRef,
+        public zone: NgZone,
+        public config: PrimeNGConfig,
+        private renderer: Renderer2,
+        private viewContainer: ViewContainerRef
+    ) {}
 
     ngAfterViewInit() {
         if (isPlatformBrowser(this.platformId)) {
@@ -194,6 +205,17 @@ export class Tooltip implements AfterViewInit, OnDestroy {
                 }
             });
         }
+    }
+
+    setAriaDescribedBy() {
+        const tooltipId = this.getOption('id');
+        if (tooltipId && this.active) {
+            this.renderer.setAttribute(this.el.nativeElement, 'aria-describedby', tooltipId);
+        }
+    }
+
+    removeAriaDescribedBy() {
+        this.renderer.removeAttribute(this.el.nativeElement, 'aria-describedby');
     }
 
     ngOnChanges(simpleChange: SimpleChanges) {
@@ -324,32 +346,36 @@ export class Tooltip implements AfterViewInit, OnDestroy {
         this.deactivate();
     }
 
-    @HostListener('document:keydown.escape', ['$event'])
-    onPressEscape() {
-        if (this.hideOnEscape) {
-            this.deactivate();
-        }
-    }
-
     activate() {
-        this.active = true;
-        this.clearHideTimeout();
+        if (!this.interactionInProgress) {
+            this.active = true;
+            this.clearHideTimeout();
 
-        if (this.getOption('showDelay'))
-            this.showTimeout = setTimeout(() => {
-                this.show();
-            }, this.getOption('showDelay'));
-        else this.show();
+            if (this.getOption('showDelay'))
+                this.showTimeout = setTimeout(() => {
+                    this.show();
+                }, this.getOption('showDelay'));
+            else this.show();
 
-        if (this.getOption('life')) {
-            let duration = this.getOption('showDelay') ? this.getOption('life') + this.getOption('showDelay') : this.getOption('life');
-            this.hideTimeout = setTimeout(() => {
-                this.hide();
-            }, duration);
+            if (this.getOption('life')) {
+                let duration = this.getOption('showDelay') ? this.getOption('life') + this.getOption('showDelay') : this.getOption('life');
+                this.hideTimeout = setTimeout(() => {
+                    this.hide();
+                }, duration);
+            }
+
+            if (this.getOption('hideOnEscape')) {
+                this.documentEscapeListener = this.renderer.listen('document', 'keydown.escape', () => {
+                    this.deactivate();
+                    this.documentEscapeListener();
+                });
+            }
         }
+        this.interactionInProgress = true;
     }
 
     deactivate() {
+        this.interactionInProgress = false;
         this.active = false;
         this.clearShowTimeout();
 
@@ -360,6 +386,10 @@ export class Tooltip implements AfterViewInit, OnDestroy {
             }, this.getOption('hideDelay'));
         } else {
             this.hide();
+        }
+
+        if (this.documentEscapeListener) {
+            this.documentEscapeListener();
         }
     }
 
@@ -404,6 +434,8 @@ export class Tooltip implements AfterViewInit, OnDestroy {
             this.container.style.pointerEvents = 'unset';
             this.bindContainerMouseleaveListener();
         }
+
+        this.setAriaDescribedBy();
     }
 
     bindContainerMouseleaveListener() {
@@ -560,7 +592,7 @@ export class Tooltip implements AfterViewInit, OnDestroy {
     }
 
     private get activeElement(): HTMLElement {
-        return this.el.nativeElement.nodeName.includes('P-') ? DomHandler.findSingle(this.el.nativeElement, '.p-component') : this.el.nativeElement;
+        return this.el.nativeElement.nodeName.includes('P-') ? DomHandler.findSingle(this.el.nativeElement, '.p-component') || this.el.nativeElement : this.el.nativeElement;
     }
 
     alignLeft() {
@@ -671,9 +703,6 @@ export class Tooltip implements AfterViewInit, OnDestroy {
             if (!target) {
                 target = this.getTarget(this.el.nativeElement);
             }
-
-            target.removeEventListener('focus', this.focusListener);
-            target.removeEventListener('blur', this.blurListener);
         }
         this.unbindDocumentResizeListener();
     }
@@ -689,6 +718,7 @@ export class Tooltip implements AfterViewInit, OnDestroy {
         this.unbindScrollListener();
         this.unbindContainerMouseleaveListener();
         this.clearTimeouts();
+        this.removeAriaDescribedBy();
         this.container = null;
         this.scrollHandler = null;
     }
@@ -724,6 +754,10 @@ export class Tooltip implements AfterViewInit, OnDestroy {
         if (this.scrollHandler) {
             this.scrollHandler.destroy();
             this.scrollHandler = null;
+        }
+
+        if (this.documentEscapeListener) {
+            this.documentEscapeListener();
         }
     }
 }

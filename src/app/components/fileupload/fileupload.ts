@@ -11,6 +11,7 @@ import {
     EventEmitter,
     Inject,
     Input,
+    LOCALE_ID,
     NgModule,
     NgZone,
     OnDestroy,
@@ -124,7 +125,7 @@ import { FileBeforeUploadEvent, FileProgressEvent, FileRemoveEvent, FileSelectEv
                 <div class="p-fileupload-files" *ngIf="hasFiles()">
                     <div *ngIf="!fileTemplate">
                         <div class="p-fileupload-row" *ngFor="let file of files; let i = index">
-                            <div><img [src]="file.objectURL" *ngIf="isImage(file)" [width]="previewWidth" (error)="imageError($event)" /></div>
+                            <div *ngIf="isImage(file)"><img [src]="file.objectURL" [width]="previewWidth" (error)="imageError($event)" /></div>
                             <div class="p-fileupload-filename">{{ file.name }}</div>
                             <div>{{ formatSize(file.size) }}</div>
                             <div>
@@ -445,7 +446,7 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
      */
     @Output() onImageError: EventEmitter<Event> = new EventEmitter<Event>();
     /**
-     * This event is triggered if an error occurs while loading an image file.
+     * This event is triggered if an error occurs while removing an uploaded file.
      * @param {RemoveUploadedFileEvent} event - Remove event.
      * @group Emits
      */
@@ -525,9 +526,14 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
 
     public uploadedFiles = [];
 
+    private fileUploadSubcription: Subscription;
+
+    private formatter;
+
     constructor(
         @Inject(DOCUMENT) private document: Document,
         @Inject(PLATFORM_ID) private platformId: any,
+        @Inject(LOCALE_ID) private locale: string,
         private renderer: Renderer2,
         private el: ElementRef,
         public sanitizer: DomSanitizer,
@@ -535,7 +541,9 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
         private http: HttpClient,
         public cd: ChangeDetectorRef,
         public config: PrimeNGConfig
-    ) {}
+    ) {
+        this.formatter = new Intl.NumberFormat(this.locale, { maximumFractionDigits: 3 });
+    }
 
     ngAfterContentInit() {
         this.templates?.forEach((item) => {
@@ -746,7 +754,10 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
                 formData.append(this.name!, this.files[i], this.files[i].name);
             }
 
-            this.http
+            // If the previous upload hasn't been finished, it is aborted.
+            this.cancelUploadRequest();
+
+            this.fileUploadSubcription = this.http
                 .request(<string>this.method, this.url as string, {
                     body: formData,
                     headers: this.headers,
@@ -805,6 +816,7 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
     clear() {
         this.files = [];
         this.uploadedFileCount = 0;
+        this.cancelUploadRequest();
         this.onClear.emit();
         this.clearInputElement();
         this.cd.markForCheck();
@@ -816,6 +828,7 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
      * @group Method
      */
     remove(event: Event, index: number) {
+        this.cancelUploadRequest();
         this.clearInputElement();
         this.onRemove.emit({ originalEvent: event, file: this.files[index] });
         this.files.splice(index, 1);
@@ -830,6 +843,16 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
         let removedFile = this.uploadedFiles.splice(index, 1)[0];
         this.uploadedFiles = [...this.uploadedFiles];
         this.onRemoveUploadedFile.emit({ file: removedFile, files: this.uploadedFiles });
+    }
+
+    /**
+     * Cancel upload file request.
+     * */
+    cancelUploadRequest() {
+        if (this.fileUploadSubcription) {
+            this.fileUploadSubcription.unsubscribe();
+            this.fileUploadSubcription = undefined;
+        }
     }
 
     isFileLimitExceeded() {
@@ -935,7 +958,6 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
 
     formatSize(bytes: number) {
         const k = 1024;
-        const dm = 3;
         const sizes = this.getTranslation(TranslationKeys.FILE_SIZE_TYPES);
 
         if (bytes === 0) {
@@ -943,7 +965,7 @@ export class FileUpload implements AfterViewInit, AfterContentInit, OnInit, OnDe
         }
 
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        const formattedSize = (bytes / Math.pow(k, i)).toFixed(dm);
+        const formattedSize = this.formatter.format(bytes / Math.pow(k, i));
 
         return `${formattedSize} ${sizes[i]}`;
     }

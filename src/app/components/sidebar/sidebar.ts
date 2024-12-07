@@ -260,7 +260,13 @@ export class Sidebar implements AfterViewInit, AfterContentInit, OnDestroy {
 
     headlessTemplate: Nullable<TemplateRef<any>>;
 
-    constructor(@Inject(DOCUMENT) private document: Document, public el: ElementRef, public renderer: Renderer2, public cd: ChangeDetectorRef, public config: PrimeNGConfig) {}
+    constructor(
+        @Inject(DOCUMENT) private document: Document,
+        public el: ElementRef,
+        public renderer: Renderer2,
+        public cd: ChangeDetectorRef,
+        public config: PrimeNGConfig
+    ) {}
 
     ngAfterViewInit() {
         this.initialized = true;
@@ -322,15 +328,19 @@ export class Sidebar implements AfterViewInit, AfterContentInit, OnDestroy {
     }
 
     close(event: Event) {
-        this.hide();
+        this.hide(false);
         this.visibleChange.emit(false);
         event.preventDefault();
     }
 
     enableModality() {
+        const activeDrawers = this.document.querySelectorAll('.p-sidebar-active');
+        const activeDrawersLength = activeDrawers.length;
+        const zIndex = activeDrawersLength == 1 ? String(parseInt((this.container as HTMLDivElement).style.zIndex) - 1) : String(parseInt((activeDrawers[0] as HTMLElement).style.zIndex) - 1);
+
         if (!this.mask) {
             this.mask = this.renderer.createElement('div');
-            this.renderer.setStyle(this.mask, 'zIndex', String(parseInt((this.container as HTMLDivElement).style.zIndex) - 1));
+            this.renderer.setStyle(this.mask, 'zIndex', zIndex);
             DomHandler.addMultipleClasses(this.mask, 'p-component-overlay p-sidebar-mask p-component-overlay p-component-overlay-enter');
 
             if (this.dismissible) {
@@ -387,7 +397,7 @@ export class Sidebar implements AfterViewInit, AfterContentInit, OnDestroy {
     onAnimationEnd(event: any) {
         switch (event.toState) {
             case 'void':
-                this.hide(false);
+                this.hide(true);
                 ZIndexUtils.clear(this.container);
                 this.unbindGlobalListeners();
                 break;

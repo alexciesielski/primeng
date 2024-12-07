@@ -284,7 +284,7 @@ export class InputOtp implements AfterContentInit {
             return;
         }
 
-        switch (event.code) {
+        switch (event.key) {
             case 'ArrowLeft':
                 this.moveToPrev(event);
                 event.preventDefault();
@@ -311,6 +311,9 @@ export class InputOtp implements AfterContentInit {
 
                 break;
 
+            case 'Tab':
+                break;
+
             default:
                 if ((this.integerOnly && !((event.code.startsWith('Digit') || event.code.startsWith('Numpad')) && Number(event.key) >= 0 && Number(event.key) <= 9)) || (this.tokens.join('').length >= this.length && event.code !== 'Delete')) {
                     event.preventDefault();
@@ -325,7 +328,7 @@ export class InputOtp implements AfterContentInit {
             let paste = event.clipboardData.getData('text');
 
             if (paste.length) {
-                let pastedCode = paste.substring(0, this.length + 1);
+                let pastedCode = paste.substring(0, this.length);
 
                 if (!this.integerOnly || !isNaN(pastedCode)) {
                     this.tokens = pastedCode.split('');
